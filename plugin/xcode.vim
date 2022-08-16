@@ -3,6 +3,8 @@ command! -nargs=? -complete=customlist,s:build_actions
 
 command! -nargs=? -complete=customlist,s:list_simulators
       \ Xrun call <sid>run("<args>")
+command! -nargs=? -complete=customlist,s:list_simulators
+      \ XbuildAndRun call <sid>build_and_run("<args>")
 
 command! Xtest call <sid>test()
 command! Xclean call <sid>clean()
@@ -33,7 +35,7 @@ let s:default_runner_command = s:system_runner() . ' {cmd}'
 
 let s:default_xcpretty_flags = '--color'
 let s:default_xcpretty_testing_flags = ''
-let s:default_simulator = 'iPhone 6s'
+let s:default_simulator = 'iPhone 13 Pro'
 
 let s:plugin_path = expand('<sfile>:p:h:h')
 
@@ -62,7 +64,7 @@ function! s:build_actions(a, l, f)
   return ['build', 'analyze', 'archive', 'test', 'installsrc', 'install', 'clean']
 endfunction
 
-function! s:run(simulator)
+function! s:buildAndRun(simulator)
   if s:assert_project()
     if empty(a:simulator)
       let simulator = s:simulator()
@@ -73,6 +75,20 @@ function! s:run(simulator)
     let build_cmd = s:base_command('build', simulator) . s:xcpretty()
     let run_cmd = s:run_command(simulator)
     let cmd = build_cmd . ' \&\& ' . run_cmd
+    call s:execute_command(cmd)
+  endif
+endfunction
+
+function! s:run(simulator)
+  if s:assert_project()
+    if empty(a:simulator)
+      let simulator = s:simulator()
+    else
+      let simulator = a:simulator
+    endif
+
+    let run_cmd = s:run_command(simulator)
+    let cmd = run_cmd
     call s:execute_command(cmd)
   endif
 endfunction
@@ -170,6 +186,10 @@ function! s:base_command(actions, simulator)
         \ . ' '
         \ . s:build_target_with_scheme()
         \ . ' '
+        \ . '-sdk '. g:xcode_sdk_variant
+        \ . ' '
+        \ . '-configuration '. g:xcode_build_configuration
+        \ . ' '
         \ . s:destination(a:simulator)
 endfunction
 
@@ -186,6 +206,12 @@ function! s:iphone_simulator_run_command(simulator)
         \ . s:bin_script('run_ios_app')
         \ . ' '
         \ . s:build_target_with_scheme()
+        \ . ' '
+        \ . '-sdk '. g:xcode_sdk_variant
+        \ . ' '
+        \ . '-configuration '. g:xcode_build_configuration
+        \ . ' '
+        \ . s:destination(a:simulator)
 endfunction
 
 function! s:mac_run_command()
