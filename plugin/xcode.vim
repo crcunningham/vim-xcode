@@ -2,8 +2,9 @@ command! -nargs=? -complete=customlist,s:build_actions
       \ Xbuild call <sid>build("<args>")
 
 command! -nargs=? -complete=customlist,s:list_simulators
+      \ XbuildAndRun call <sid>buildAndRun("<args>")
+command! -nargs=? -complete=customlist,s:list_simulators
       \ Xrun call <sid>run("<args>")
-
 command! Xtest call <sid>test()
 command! Xclean call <sid>clean()
 command! -nargs=? -complete=file Xopen call <sid>open("<args>")
@@ -62,7 +63,7 @@ function! s:build_actions(a, l, f)
   return ['build', 'analyze', 'archive', 'test', 'installsrc', 'install', 'clean']
 endfunction
 
-function! s:run(simulator)
+function! s:buildAndRun(simulator)
   if s:assert_project()
     if empty(a:simulator)
       let simulator = s:simulator()
@@ -73,6 +74,21 @@ function! s:run(simulator)
     let build_cmd = s:base_command('build', simulator) . s:xcpretty()
     let run_cmd = s:run_command(simulator)
     let cmd = build_cmd . ' \&\& ' . run_cmd
+    call s:execute_command(cmd)
+  endif
+endfunction
+
+
+function! s:run(simulator)
+  if s:assert_project()
+    if empty(a:simulator)
+      let simulator = s:simulator()
+    else
+      let simulator = a:simulator
+    endif
+
+    let run_cmd = s:run_command(simulator)
+    let cmd = run_cmd
     call s:execute_command(cmd)
   endif
 endfunction
